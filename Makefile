@@ -1,8 +1,4 @@
 all:
-	gcc -g main.c
+	gcc -g main.c stack.c
 clean:
 	rm -f a.out
-
-tags:
-	ctags -R . 
-
