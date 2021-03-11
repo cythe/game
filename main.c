@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include "stack.h"
 
@@ -236,7 +237,7 @@ int find_all(struct _tube arr[], int tube_cnt, struct _steps *s)
     {
 	for (int j = 0; j < tube_cnt; j++)
 	{
-	    if (j==i)
+	    if (j == i)
 		continue;
 	    if (can_pour(&arr[i], &arr[j])) {
 		/* add this step to list */
@@ -385,47 +386,122 @@ revert:
 }
 #endif
 
+struct _tube tubes[] = {
+#if 0
+    /* case 1 */
+    {4, BLUE1, GREEN1, RED,  RED},
+    {4, RED,  RED,  GREEN1, BLUE1},
+    {4, GREEN1,  GREEN1,  BLUE1, BLUE1},
+    {0, COL_NULL, COL_NULL, COL_NULL, COL_NULL},
+#else
+#if 0
+    /* case 2 */
+    {4, BLUE1, RED,  RED, RED},
+    {4, GREEN1, RED,  GREEN1, BLUE1},
+    {4, GREEN1,  GREEN1,  BLUE1, BLUE1},
+    {0, COL_NULL, COL_NULL, COL_NULL, COL_NULL},
+#else
+    /* case 117 */
+    {4, GREEN1, GREEN3, PUPOR,  BLUE1},
+    {4, PINK,   GRAY,   GREEN1, BLUE2},
+    {4, BLUE1,  BLUE2,  BLUE1,  BLUE2},
+    {4, GREEN3, PUPOR,  YELLOW2, RED},
+    {4, BLUE1,  RED,    YELLOW2, GREEN1},
+    {4, GREEN3, YELLOW2, YELLOW1, RED},
+    {4, PUPOR,  RED,    GREEN2,  GREEN2},
+    {4, GREEN1, GREEN2, GRAY,    GREEN2},
+    {4, YELLOW1, BROWN, BLUE2, YELLOW1},
+    {4, PINK, YELLOW2, PUPOR, BROWN},
+    {4, GRAY, YELLOW1, BROWN, GRAY},
+    {4, PINK, GREEN3, BROWN, PINK},
+    {0, COL_NULL, COL_NULL, COL_NULL, COL_NULL},
+    {0, COL_NULL, COL_NULL, COL_NULL, COL_NULL},
+#endif
+#endif
+};
+
+struct _tube * g_tubes;
+int g_tube_cnt = 0;
+void load_map_from_file(void) // cfg.txt
+{
+
+}
+
+void format_tube(struct _tube *t)
+{
+    struct _tube *tmp = dup_tubes(t, 1);
+    int j = 0;
+
+    memset(t, 0, sizeof(struct _tube));
+    for (int i = 0; i < TUBE_FLOOR; i++)
+    {
+	if(tmp->colors[i]) {
+	    t->colors[j] = tmp->colors[i];
+	    j++;
+	}
+    }
+
+    t->status = j;
+
+    free(tmp);
+}
+
+void load_map_from_stdin(void)
+{
+    printf("Please input tube cnt: ");
+    fflush(stdout);
+    scanf("%d", &g_tube_cnt); 
+    g_tubes = (struct _tube*)malloc(g_tube_cnt * sizeof(struct _tube));
+
+    for(int i = 0; i < g_tube_cnt; i++)
+    {
+	printf("Please input tube[%d] colors(up to down): ", i);
+	fflush(stdout);
+	scanf("%d %d %d %d", &g_tubes[i].colors[3], &g_tubes[i].colors[2], &g_tubes[i].colors[1], &g_tubes[i].colors[0]);
+	format_tube(&g_tubes[i]);
+    }
+
+    printresults(g_tubes, g_tube_cnt);
+}
+
+void load_map(void)
+{
+    int type;
+
+    printf("------- Select map type -------\n");
+    printf("\t1 - from stdin\n");
+    printf("\t2 - from file\n");
+    printf("\t3 - from inside case\n");
+    printf("Please input map type: ");
+    fflush(stdout);
+    scanf("%d", &type);
+    switch(type)
+    {
+	case 1:
+	    load_map_from_stdin();
+	    break;
+	case 2:
+	    load_map_from_file();
+	    break;
+	case 3:
+	    g_tubes = tubes;
+	    g_tube_cnt = sizeof(tubes) / sizeof(tubes[0]);
+	    printf("tube_cnt = %d\n", g_tube_cnt);
+	    sleep(2);
+	    break;
+	default:
+	    printf("Get out !\n");
+	    exit(-1);
+    }
+}
+
 int main(int argc, char* argv[])
 {
     /* next: load map from file */
-    struct _tube tubes[] = {
-#if 0
-	/* case 1 */
-	{4, BLUE1, GREEN1, RED,  RED},
-	{4, RED,  RED,  GREEN1, BLUE1},
-	{4, GREEN1,  GREEN1,  BLUE1, BLUE1},
-	{0, COL_NULL, COL_NULL, COL_NULL, COL_NULL},
-#else
-#if 0
-	/* case 2 */
-	{4, BLUE1, RED,  RED, RED},
-	{4, GREEN1, RED,  GREEN1, BLUE1},
-	{4, GREEN1,  GREEN1,  BLUE1, BLUE1},
-	{0, COL_NULL, COL_NULL, COL_NULL, COL_NULL},
-#else
-	/* case 117 */
-	{4, GREEN1, GREEN3, PUPOR,  BLUE1},
-	{4, PINK,   GRAY,   GREEN1, BLUE2},
-	{4, BLUE1,  BLUE2,  BLUE1,  BLUE2},
-	{4, GREEN3, PUPOR,  YELLOW2, RED},
-	{4, BLUE1,  RED,    YELLOW2, GREEN1},
-	{4, GREEN3, YELLOW2, YELLOW1, RED},
-	{4, PUPOR,  RED,    GREEN2,  GREEN2},
-	{4, GREEN1, GREEN2, GRAY,    GREEN2},
-	{4, YELLOW1, BROWN, BLUE2, YELLOW1},
-	{4, PINK, YELLOW2, PUPOR, BROWN},
-	{4, GRAY, YELLOW1, BROWN, GRAY},
-	{4, PINK, GREEN3, BROWN, PINK},
-	{0, COL_NULL, COL_NULL, COL_NULL, COL_NULL},
-	{0, COL_NULL, COL_NULL, COL_NULL, COL_NULL},
-#endif
-#endif
-    };
 
-    int tube_cnt = sizeof(tubes) / sizeof(tubes[0]);
-    printf("tube_cnt = %d\n", tube_cnt);
+    load_map();
 
-    sort(tubes, tube_cnt);
+    sort(g_tubes, g_tube_cnt);
 
     return 0;
 }

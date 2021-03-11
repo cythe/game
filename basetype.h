@@ -18,7 +18,7 @@ enum color {
     MAX,
 };
 
-/* 管管 */
+/* 管管属性 */
 #define TUBE_FLOOR 4
 #define TUBE_FULL TUBE_FLOOR
 #define TUBE_EMPTY 0
