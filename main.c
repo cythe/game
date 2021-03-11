@@ -3,54 +3,21 @@
 #include <string.h>
 #include "stack.h"
 
-enum color {
-    COL_NULL=0,
-    BLUE1,
-    BLUE2,
-    PUPOR,
-    GREEN1,
-    GREEN2,
-    GREEN3,
-    RED,
-    PINK,
-    GRAY,
-    YELLOW1,
-    YELLOW2,
-    BROWN,
-    MAX,
-};
-
-#define TUBE_FLOOR 4
-#define TUBE_FULL TUBE_FLOOR
-#define TUBE_EMPTY 0
-
-#define TUBE_CNT 14
-#define MAYBE ( TUBE_CNT * (TUBE_CNT-1)) 
-
-struct _tube {
-    int status;
-    int colors[TUBE_FLOOR];
-};
-
-struct _step {
-    int cnt;
-    struct _pair pair[MAYBE];
-};
-
-void printsteps(struct _step *s)
+void printsteps(struct _steps *s)
 {
     printf("steps: %d\n", s->cnt);
     for (int i = 0; i < s->cnt; i++)
-	printf("\t%d -> %d\n", s->pair[i].src, s->pair[i].dest);
+	printf("\t%d -> %d\n", s->flow[i].src, s->flow[i].dest);
 }
 
-void add_step(struct _step *s, int src, int dest)
+void add_step(struct _steps *s, int src, int dest)
 {
-    s->pair[s->cnt].src = src;
-    s->pair[s->cnt].dest = dest;
+    s->flow[s->cnt].src = src;
+    s->flow[s->cnt].dest = dest;
     s->cnt++;
 }
 
+/* 当前管管们的状态 */
 void printresults(struct _tube tubes[], int tube_cnt)
 {
     for (int i = 0; i < tube_cnt; i++)
@@ -92,27 +59,60 @@ void printtube(struct _tube *tube)
     printf("\n");
 }
 
-void _pour(struct _tube *src, struct _tube *dest)
+int _pour(struct _tube *src, struct _tube *dest)
 {
+    int cnt = 0;
     do {
 	dest->colors[dest->status] = src->colors[src->status-1];
 	dest->status++;
 	src->colors[src->status-1] = COL_NULL;
 	src->status--;
+	cnt++;
 	if (dest->status == TUBE_FULL || src->status == TUBE_EMPTY)
 	    break;
     } while (src->colors[src->status-1] == dest->colors[dest->status-1]);
+    return cnt;
 }
 
-void pour(struct _tube *tube1, struct _tube *tube2, int reverse)
+void npour(struct _tube *src, struct _tube *dest, int n)
+{
+    for (int i = 0; i < n; i++)
+    {
+	dest->colors[dest->status] = src->colors[src->status-1];
+	dest->status++;
+	src->colors[src->status-1] = COL_NULL;
+	src->status--;
+    }
+}
+
+int pour(struct _tube *tube1, struct _tube *tube2, int reverse)
 {
     if (reverse)
-	_pour(tube2, tube1);
+	return _pour(tube2, tube1);
     else
-	_pour(tube1, tube2);
+	return _pour(tube1, tube2);
 }
 
+/* 有序的 */
 int is_sorted(struct _tube *tube)
+{
+    int color_tmp = tube->colors[0];
+    if (tube->status == TUBE_EMPTY) {
+	return 1;
+    }
+
+    for (int i = 0; i < tube->status; i++)
+    {
+	if (color_tmp == tube->colors[i])
+	    continue;
+	else 
+	    return 0;
+    }
+    return 1;
+}
+
+/* 排完的 */
+int is_sorted_full(struct _tube *tube)
 {
     int color_tmp = tube->colors[0];
     if (tube->status == TUBE_EMPTY) {
@@ -137,7 +137,7 @@ int is_complete(struct _tube arr[], int tube_cnt)
     int i;
     for (i = 0; i < tube_cnt; i++)
     {
-	if (is_sorted(&arr[i]))
+	if (is_sorted_full(&arr[i]))
 	    continue;
 	else
 	    return 0;
@@ -160,6 +160,24 @@ int swap_tube(struct _tube *src, struct _tube *dest)
     free(t);
 }
 
+int cal_place(struct _tube *t)
+{
+    return TUBE_FLOOR - t->status;
+}
+
+int cal_color(struct _tube *t)
+{
+    int cnt=0;
+    int top = t->colors[t->status-1];
+    for (int i = 0; i < t->status; i++)
+    {
+	if(t->colors[t->status-1-i] == top)
+	    cnt++;
+    }
+    return cnt;
+
+}
+
 int can_pour(struct _tube *src, struct _tube *dest)
 {
     // dest full or src empty
@@ -167,14 +185,18 @@ int can_pour(struct _tube *src, struct _tube *dest)
 	return 0;
 
     // dest empty
-    if (dest->status == TUBE_EMPTY)
+    if (dest->status == TUBE_EMPTY && !is_sorted(src))
 	return 1;
 
     // top color equel
     if (dest->colors[dest->status-1] == src->colors[src->status-1])
+    {
+	if (cal_place(dest) < cal_color(src))
+	    return 0;
 	return 1; 
-    else
+    } else {
 	return 0;
+    }
 
     // there maybe other scence ???
     printf("Emmmm.....\n");
@@ -206,9 +228,10 @@ int get_top(struct _tube* t)
     return t->colors[t->status-1];
 }
 
-int find_all(struct _tube arr[], int tube_cnt, struct _step *s)
+int find_all(struct _tube arr[], int tube_cnt, struct _steps *s)
 {
     int cnt = 0;
+    memset(s, 0, sizeof(struct _steps));
     for (int i = 0; i < tube_cnt; i++)
     {
 	for (int j = 0; j < tube_cnt; j++)
@@ -236,7 +259,7 @@ struct _tube *dup_tubes(struct _tube tubes[], int size)
 	getchar();
     }
     memcpy(p, tubes, size*sizeof(struct _tube));
-    g_cnt ++ ;
+    g_cnt++ ;
     printf("+++++++++ tubes =  %d+++++++++++++++++++++++++++++ \n", g_cnt);
 
     return p;
@@ -245,49 +268,43 @@ struct _tube *dup_tubes(struct _tube tubes[], int size)
 int find_next_road(struct _tube arr[], int tube_cnt)
 {
     int cnt = 0;
-    struct _step next; 
-    memset(&next, 0, sizeof(struct _step));
+    struct _steps next; 
+    memset(&next, 0, sizeof(struct _steps));
 
     if (is_complete(arr, tube_cnt)) {
-	printf("-------------------------------complete1.\n");
+	printf("--------------------------------------complete2.\n");
 	return 0;
     }
 
     cnt = find_all(arr, tube_cnt, &next);
     if (!cnt) {
 	printf("this road is block, return to last node.\n");
+	free(arr);
+	g_cnt--;
 	return -1;
     }
 
-    //printsteps(&next);
+    printsteps(&next);
 
-    for (int i = 0; i < cnt; i++)
+    for (int i = 0; i < next.cnt; i++)
     {
 	printf("before pour:\n");
 	printresults(arr, tube_cnt);
 	/* create a duplicate to try for next step */
 	struct _tube *n = dup_tubes(arr, tube_cnt);
-	pour(&n[next.pair[i].src], &n[next.pair[i].dest], 0);
+	pour(&n[next.flow[i].src], &n[next.flow[i].dest], 0);
 	printf("after pour:\n");
 	printresults(n, tube_cnt);
-	if (is_complete(n, tube_cnt)) {
-	    free(n);
-	    printf("--------------------------------------complete2.\n");
-	    return 0;
-	}
 	// try to find next road, if there is nothing, back to last and try another.
 	int ret = find_next_road(n, tube_cnt);
-	if (ret == 0)
-	{
-	    if (is_complete(arr, tube_cnt)) {
-		printf("-------------------------------------complete3.\n");
-		return 0;
-	    }
-	    else 
-	    {
-		free(n);
-		continue;
-	    }
+	if (ret) {
+	    free(n);
+	    g_cnt--;
+	    continue;
+	} else {
+	    free(n);
+	    g_cnt--;
+	    return ret;
 	}
     }
 
@@ -295,20 +312,98 @@ int find_next_road(struct _tube arr[], int tube_cnt)
     return -1;
 }
 
+#if 0
+/* 递归实现, 目测还有问题, 复杂case会挂 */
 void sort(struct _tube arr[], int tube_cnt)
 {
     int ret;
     ret = find_next_road(arr, tube_cnt);
-    if(ret)
+    if(!ret)
 	printf("complete.\n");
     else
-	printf("failed.");
+	printf("failed.\n");
 }
+#else
+/* 通过栈和回溯实现 */
+// 假设需要MAX_STEP 步
+#define MAX_STEP 1024
+void sort(struct _tube arr[], int tube_cnt)
+{
+    struct _steps curr[MAX_STEP];
+    memset(curr, 0, sizeof(MAX_STEP * sizeof(struct _steps)));
+    struct _from_to tp;
+    int ret;
+    int p_curr;
+
+    struct _stack stack;
+
+    stack_init(&stack);
+
+    for (int s = 0; s < MAX_STEP; )
+    {
+	printf("--------------------- step %d -------------------\n", s);
+	ret = find_all(arr, tube_cnt, &curr[s]); // 找到这一步所有情况
+	// printsteps(&curr[s]);
+	if (ret == 0) {
+	    // 如果没有下一步, 需要回溯
+revert:
+	    if (s > 0) {
+		s--;
+		printf("--------return --------- step %d -------------------\n", s);
+	    } else {
+		printf("Road block, return last step. \n");
+		return;
+	    }
+
+	    stack_pop(&stack, &tp);
+	    printf("exec: %d -> %d, %d\n", tp.dest, tp.src, tp.cnt);
+	    npour(&arr[tp.dest], &arr[tp.src], tp.cnt);
+	    printresults(arr, tube_cnt);
+	}
+
+	p_curr = curr[s].scence;
+	if (p_curr >= curr[s].cnt)
+	{
+	    goto revert;
+	}
+
+	ret = pour(&arr[curr[s].flow[p_curr].src], &arr[curr[s].flow[p_curr].dest], 0);
+	curr[s].scence++;
+	curr[s].flow[p_curr].cnt = ret;
+	stack_push(&stack, curr[s].flow[p_curr]);
+	printf("exec: %d -> %d, %d\n", curr[s].flow[p_curr].src, curr[s].flow[p_curr].dest,curr[s].flow[p_curr].cnt);
+	printresults(arr, tube_cnt);
+	s++;
+	if (is_complete(arr, tube_cnt)) {
+	    printf("complete!\n");
+	    break;
+	}
+    }
+
+    /* 打印最终结果 */
+    stack_print(&stack);
+}
+#endif
 
 int main(int argc, char* argv[])
 {
     /* next: load map from file */
     struct _tube tubes[] = {
+#if 0
+	/* case 1 */
+	{4, BLUE1, GREEN1, RED,  RED},
+	{4, RED,  RED,  GREEN1, BLUE1},
+	{4, GREEN1,  GREEN1,  BLUE1, BLUE1},
+	{0, COL_NULL, COL_NULL, COL_NULL, COL_NULL},
+#else
+#if 0
+	/* case 2 */
+	{4, BLUE1, RED,  RED, RED},
+	{4, GREEN1, RED,  GREEN1, BLUE1},
+	{4, GREEN1,  GREEN1,  BLUE1, BLUE1},
+	{0, COL_NULL, COL_NULL, COL_NULL, COL_NULL},
+#else
+	/* case 117 */
 	{4, GREEN1, GREEN3, PUPOR,  BLUE1},
 	{4, PINK,   GRAY,   GREEN1, BLUE2},
 	{4, BLUE1,  BLUE2,  BLUE1,  BLUE2},
@@ -323,6 +418,8 @@ int main(int argc, char* argv[])
 	{4, PINK, GREEN3, BROWN, PINK},
 	{0, COL_NULL, COL_NULL, COL_NULL, COL_NULL},
 	{0, COL_NULL, COL_NULL, COL_NULL, COL_NULL},
+#endif
+#endif
     };
 
     int tube_cnt = sizeof(tubes) / sizeof(tubes[0]);
