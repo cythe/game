@@ -2,7 +2,10 @@
 
 void printcolor(int c)
 {
-    printf("|\033[1;48;5;%dm%3d\033[0m|", c, c);
+    if(c <= 0)
+	printf("|   |");
+    else
+	printf("|\033[1;48;5;%dm%3d\033[0m|", c, c);
 }
 
 void print_std256color(void)
