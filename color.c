@@ -12,14 +12,16 @@ void print_std256color(void)
     printf("-------------------- stadard 8色 --------------------\n");
     for (int i = 0; i < 8; i++)
     {
-	printf("\033[1;48;5;%dm[%3d]\033[0m", i, i);
+	printcolor(i);
+	//printf("\033[1;48;5;%dm[%3d]\033[0m", i, i);
     }
     printf("\n");
 
     printf("-------------------- enhance 8 colors --------------------\n");
     for (int i = 8; i < 16; i++)
     {
-	printf("\033[1;48;5;%dm[%3d]\033[0m", i, i);
+	printcolor(i);
+	//printf("\033[1;48;5;%dm[%3d]\033[0m", i, i);
     }
     printf("\n");
 
@@ -28,7 +30,8 @@ void print_std256color(void)
     {
 	if (c%36 == 0)
 	    printf("\n");
-	printf("\033[1;48;5;%dm[%3d]\033[0m", i, i);
+	printcolor(i);
+	//printf("\033[1;48;5;%dm[%3d]\033[0m", i, i);
 	c++;
     }
     printf("\n");
@@ -36,7 +39,8 @@ void print_std256color(void)
     printf("-------------------- gray --------------------\n");
     for (int i = 232; i < 256; i++)
     {
-	printf("\033[1;48;5;%dm[%3d]\033[0m", i, i);
+	printcolor(i);
+	//printf("\033[1;48;5;%dm[%3d]\033[0m", i, i);
     }
     printf("\n");
 }
