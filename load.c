@@ -49,14 +49,13 @@ void load_map_from_file(void) // cfg.txt
 
 }
 
-static void init_choiced(void)
+static int is_not_exist(int color)
 {
-    memset(&g_choiced, 0, sizeof(struct _choiced));
-}
+    for (int i = 0; i < g_choiced.cnt; i++)
+	if (color == g_choiced.colors[i])
+	    return 0;
 
-static void deinit_choiced(void)
-{
-    memset(&g_choiced, 0, sizeof(struct _choiced));
+    return 1;
 }
 
 static void show_choice(void)
@@ -66,13 +65,40 @@ static void show_choice(void)
     printf("\n");
 }
 
-static int is_not_exist(int color)
+static void init_choiced(void)
 {
-    for (int i = 0; i < g_choiced.cnt; i++)
-	if (color == g_choiced.colors[i])
-	    return 0;
+    int color;
+    int ch;
+    memset(&g_choiced, 0, sizeof(struct _choiced));
 
-    return 1;
+    do{
+	show_choice();
+	printf("==== init color panton ====\n"
+		"[ -1]: show all colors\n"
+		"[999]: End\n"
+		"Choice a color: ");
+	fflush(stdout);
+
+	scanf("%d", &color);
+	if (color < 0) {
+	    print_std256color();
+	    continue;
+	}
+	if (color > 256) {
+	    break;
+	}
+
+	if (is_not_exist(color))
+	{
+	    g_choiced.colors[g_choiced.cnt] = color;
+	    g_choiced.cnt++ ;
+	}
+    } while(1);
+}
+
+static void deinit_choiced(void)
+{
+    memset(&g_choiced, 0, sizeof(struct _choiced));
 }
 
 void format_tube(struct _tube *t)
@@ -91,44 +117,51 @@ void format_tube(struct _tube *t)
 
     t->status = j;
 
-    free(tmp);
+    free_tubes(tmp);
 }
 
 static void load_map_from_stdin(void)
 {
+    int color_cnt;
     int color;
     char ch;
-    char s[1024];
+	int j = 0;
 
-    printf("Please input tube cnt: ");
+    printf("Please input tube cnt (include empty tube): ");
     fflush(stdout);
     scanf("%d", &g_tube_cnt); 
     g_tubes = (struct _tube*)malloc(g_tube_cnt * sizeof(struct _tube));
 
     for(int i = 0; i < g_tube_cnt; i++)
     {
-retry:
-	for (int j = 0; j < TUBE_FLOOR;) 
-	{
-	    while(1)
-	    {
-		show_choice();
-		printf("choice a color, [-1] show all colors: ");
-		fflush(stdout);
-		scanf("%d", &color);
-		if (color < 0) {
-		    print_std256color();
-		    continue;
-		}
+repick:
+	j = 0;
+	show_choice();
+	printf("==== choice color for tube[%d] ====\n"
+		"[ -1]: show all colors\n"
+		"[ 0 ]: for NULL\n"
+		"[c1 c2 c3 c4]\n"
+		"top -> bottom\n"
+		"choice color: ", i);
+	fflush(stdout);
 
-		g_tubes[i].colors[TUBE_FLOOR-j-1] = color;
-		j++;
-		if (is_not_exist(color))
-		{
-		    g_choiced.colors[g_choiced.cnt] = color;
-		    g_choiced.cnt++ ;
-		}
-		break;
+	while(j < TUBE_FLOOR)
+	{
+	    scanf("%d", &color);
+	    if (color < 0) {
+		print_std256color();
+		goto repick;
+	//	continue;
+	    }
+
+	    g_tubes[i].colors[TUBE_FLOOR-j-1] = color;
+	    j++;
+	    if (is_not_exist(color))
+	    {
+		printf("This color is not exist at list!!!\n");
+		color_cnt = g_choiced.cnt;
+		g_choiced.colors[g_choiced.cnt] = color;
+		g_choiced.cnt++ ;
 	    }
 	}
 
@@ -140,7 +173,10 @@ retry:
 	scanf("%c", &ch);
 	printf("ch = %c\n", ch);
 	if (ch == 'n')
-	    goto retry;
+	{
+	    color_cnt = g_choiced.cnt;
+	    goto repick;
+	}
     }
 
     printresults(g_tubes, g_tube_cnt);

@@ -16,15 +16,16 @@ struct _tube *dup_tubes(struct _tube tubes[], int size)
     }
     memcpy(p, tubes, size*sizeof(struct _tube));
     g_cnt++ ;
-    printf("+++++++++ tubes =  %d+++++++++++++++++++++++++++++ \n", g_cnt);
+    printf("+++++++++ tubes = %d ++++++++++\n", g_cnt);
 
     return p;
 }
 
 void free_tubes(struct _tube *tube)
 {
-	free(tube);
-	g_cnt--;
+    free(tube);
+    g_cnt--;
+    printf("---------- tubes = %d ----------\n", g_cnt);
 }
 
 /* 当前管管们的状态 */
@@ -58,6 +59,7 @@ void printtube(struct _tube *tube)
     for (int i = 0; i < TUBE_FLOOR; i++)
     {
 	printcolor(tube->colors[TUBE_FLOOR-i-1]); 
+	printf("\n");
     }
     printf(" ^^^ \n");
 }
