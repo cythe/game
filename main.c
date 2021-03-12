@@ -99,7 +99,6 @@ void sort(struct _tube arr[], int tube_cnt)
 }
 #else
 /* 通过栈和回溯实现 */
-// 假设需要MAX_STEP 步
 void sort(struct _tube arr[], int tube_cnt)
 {
     struct _steps curr[MAX_STEP];
@@ -107,14 +106,15 @@ void sort(struct _tube arr[], int tube_cnt)
     struct _from_to tp;
     int ret;
     int p_curr;
+    int s;
 
     struct _stack stack;
 
     stack_init(&stack);
 
-    for (int s = 0; s < MAX_STEP; )
+    for (s = 0; s < MAX_STEP; )
     {
-	printf("--------------------- step %d -------------------\n", s);
+	//printf("--------------------- step %d -------------------\n", s);
 	ret = find_all(arr, tube_cnt, &curr[s]); // 找到这一步所有情况
 	// printsteps(&curr[s]);
 	if (ret == 0) {
@@ -122,21 +122,20 @@ void sort(struct _tube arr[], int tube_cnt)
 revert:
 	    if (s > 0) {
 		s--;
-		printf("--------return --------- step %d -------------------\n", s);
+		//printf("--------return --------- step %d -------------------\n", s);
 	    } else {
-		printf("Road block, return last step. \n");
+		//printf("Road block, return last step. \n");
 		return;
 	    }
 
 	    stack_pop(&stack, &tp);
-	    printf("exec: %d -> %d, %d\n", tp.dest, tp.src, tp.cnt);
+	    //printf("exec: %d -> %d, %d\n", tp.dest, tp.src, tp.cnt);
 	    npour(&arr[tp.dest], &arr[tp.src], tp.cnt);
-	    printresults(arr, tube_cnt);
+	    //printresults(arr, tube_cnt);
 	}
 
 	p_curr = curr[s].scence;
-	if (p_curr >= curr[s].cnt)
-	{
+	if (p_curr >= curr[s].cnt) {
 	    goto revert;
 	}
 
@@ -144,8 +143,8 @@ revert:
 	curr[s].scence++;
 	curr[s].flow[p_curr].cnt = ret;
 	stack_push(&stack, curr[s].flow[p_curr]);
-	printf("exec: %d -> %d, %d\n", curr[s].flow[p_curr].src, curr[s].flow[p_curr].dest,curr[s].flow[p_curr].cnt);
-	printresults(arr, tube_cnt);
+	//printf("exec: %d -> %d, %d\n", curr[s].flow[p_curr].src, curr[s].flow[p_curr].dest,curr[s].flow[p_curr].cnt);
+	//printresults(arr, tube_cnt);
 	s++;
 	if (is_complete(arr, tube_cnt)) {
 	    printf("complete!\n");
@@ -153,8 +152,15 @@ revert:
 	}
     }
 
+    while (s--)
+    {
+	stack_pop(&stack, &tp);
+	printf("exec: %d -> %d, %d\n", tp.dest, tp.src, tp.cnt);
+	npour(&arr[tp.dest], &arr[tp.src], tp.cnt);
+	printresults(arr, tube_cnt);
+    }
     /* 打印最终结果 */
-    stack_print(&stack);
+    //stack_print(&stack);
 }
 #endif
 

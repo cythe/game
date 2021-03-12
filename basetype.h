@@ -3,6 +3,7 @@
 
 #include "tube.h"
 
+// 假设最多需要MAX_STEP 步
 #define MAX_STEP 1024
 /* 每步最大可能 */
 #define MAYBE ( MAX_TUBE_CNT * (MAX_TUBE_CNT-1)) 
