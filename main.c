@@ -42,56 +42,76 @@ int find_all(struct _tube arr[], int tube_cnt, struct _steps *s)
     return cnt;
 }
 
-int find_next_road(struct _tube arr[], int tube_cnt)
+int find_next_layer(struct _tube arr[], int tube_cnt, struct _steps *n)
 {
+    int cnt = 0;
+    int ret;
+    struct _steps next; 
+    memset(&next, 0, sizeof(struct _steps));
+
+    // for all last layer steps, try to find next layer
+    for (int i = 0; i < n->cnt; i++)
+    {
+	// printf("before pour:\n");
+	printresults(arr, tube_cnt);
+
+	ret = pour(&arr[n->flow[i].src], &arr[n->flow[i].dest], 0);
+	n->flow[i].cnt = ret;
+	n->scence++;
+
+	// return case 1
+	if (is_complete(arr, tube_cnt)) {
+	    printf("--------------------------------------complete2.\n");
+	    return 0;
+	}
+
+	// after exec scence, try to find next layer 
+	cnt = find_all(arr, tube_cnt, &next);
+	if (!cnt) {
+	    printf("this scence is block, try next scence.\n");
+	    npour(&arr[n->flow[i].dest], &arr[n->flow[i].src], n->flow[i].cnt);
+	    continue;
+	} else {
+	    printf("go ahead, find next layer.\n");
+	    struct _tube *new = dup_tubes(arr, tube_cnt);
+	    ret = find_next_layer(new, tube_cnt, &next);
+	    if(ret < 0) {
+		npour(&arr[n->flow[i].dest], &arr[n->flow[i].src], n->flow[i].cnt);
+		printf("this road is block, return to last node.\n");
+		// what should do here???
+	    } else {
+		printf("this road is a results, has been done.\n");
+		return 0;
+	    }
+	}
+    }
+	    
+    printf("emmmm.....\n");
+    return -1;
+}
+
+#if 1
+/* 递归实现 */
+int sort(struct _tube arr[], int tube_cnt)
+{
+    int ret;
     int cnt = 0;
     struct _steps next; 
     memset(&next, 0, sizeof(struct _steps));
 
     if (is_complete(arr, tube_cnt)) {
-	printf("--------------------------------------complete2.\n");
+	printf("It's a sorted arr, complete.\n");
 	return 0;
     }
 
     cnt = find_all(arr, tube_cnt, &next);
     if (!cnt) {
-	printf("this road is block, return to last node.\n");
-	free_tubes(arr);
+	printf("It's a unsortable arr.\n");
 	return -1;
     }
 
-    printsteps(&next);
-
-    for (int i = 0; i < next.cnt; i++)
-    {
-	printf("before pour:\n");
-	printresults(arr, tube_cnt);
-	/* create a duplicate to try for next step */
-	struct _tube *n = dup_tubes(arr, tube_cnt);
-	pour(&n[next.flow[i].src], &n[next.flow[i].dest], 0);
-	printf("after pour:\n");
-	printresults(n, tube_cnt);
-	// try to find next road, if there is nothing, back to last and try another.
-	int ret = find_next_road(n, tube_cnt);
-	if (ret) {
-	    free_tubes(n);
-	    continue;
-	} else {
-	    free_tubes(n);
-	    return ret;
-	}
-    }
-
-    printf("last road is err, return to up.\n");
-    return -1;
-}
-
-#if 0
-/* 递归实现, 目测还有问题, 复杂case会挂 */
-void sort(struct _tube arr[], int tube_cnt)
-{
-    int ret;
-    ret = find_next_road(arr, tube_cnt);
+    /* next is the first layer steps. */
+    ret = find_next_layer(arr, tube_cnt, &next);
     if(!ret)
 	printf("complete.\n");
     else
