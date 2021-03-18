@@ -74,6 +74,8 @@ static void init_choiced(void)
     do{
 	show_choice();
 	printf("==== init color panton ====\n"
+		"In this section, you can select colors you may use.\n"
+		"You also can pick colors in next step with a little tedious.\n"
 		"[ -1]: show all colors\n"
 		"[999]: End\n"
 		"Choice a color: ");
@@ -138,10 +140,10 @@ repick:
 	j = 0;
 	show_choice();
 	printf("==== choice color for tube[%d] ====\n"
+		"format: [color1 color2 color3 color4]\n"
+		"         top ---------------> bottom\n"
 		"[ -1]: show all colors\n"
-		"[ 0 ]: for NULL\n"
-		"[c1 c2 c3 c4]\n"
-		"top -> bottom\n"
+		"[ 0 ]: for NULL empty tube is [0 0 0 0] \n"
 		"choice color: ", i);
 	fflush(stdout);
 
