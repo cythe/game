@@ -172,6 +172,7 @@ revert:
 	}
     }
 
+    /* 打印最终结果 */
     while (s--)
     {
 	stack_pop(&stack, &tp);
@@ -179,7 +180,6 @@ revert:
 	npour(&arr[tp.dest], &arr[tp.src], tp.cnt);
 	printresults(arr, tube_cnt);
     }
-    /* 打印最终结果 */
     //stack_print(&stack);
 }
 #endif
