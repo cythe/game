@@ -1,11 +1,26 @@
 #include <stdio.h>
+#include "basetype.h"
+
+void printrgb(int r, int g, int b)
+{
+    if (g_need_color_value) // print R,G,B 
+        printf("[\033[1;48;2;%d;%d;%dm%3d,%3d,%3d\033[0m]", r,g,b, r, g, b); 
+    else
+        printf("[\033[1;48;2;%d;%d;%dm   \033[0m]", r,g,b); 
+}
 
 void printcolor(int c)
 {
-    if(c <= 0)
-	printf("|   |");
+    if(g_use_rgb == 1)
+    {
+	printrgb((c>>16)&0xff, (c>>8)&0xff, c&0xff);
+	return;
+    }
+
+    if (g_need_color_value) // print R,G,B 
+	printf("[\033[1;48;5;%dm%3d\033[0m]", c, c);
     else
-	printf("|\033[1;48;5;%dm%3d\033[0m|", c, c);
+	printf("[\033[1;48;5;%dm   \033[0m]", c);
 }
 
 void print_std256color(void)

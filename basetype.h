@@ -8,6 +8,11 @@
 /* 每步最大可能 */
 #define MAYBE ( MAX_TUBE_CNT * (MAX_TUBE_CNT-1)) 
 
+// global vars.
+extern int g_use_rgb;
+extern int g_align;
+extern int g_need_color_value;
+
 struct _from_to {
     int src;
     int dest;

@@ -62,6 +62,7 @@ int find_next_layer(struct _tube arr[], int tube_cnt, struct _steps *n)
 	// return case 1
 	if (is_complete(arr, tube_cnt)) {
 	    printf("--------------------------------------complete2.\n");
+	    printresults(arr, tube_cnt);
 	    return 0;
 	}
 
@@ -73,8 +74,8 @@ int find_next_layer(struct _tube arr[], int tube_cnt, struct _steps *n)
 	    continue;
 	} else {
 	    printf("go ahead, find next layer.\n");
-	    struct _tube *new = dup_tubes(arr, tube_cnt);
-	    ret = find_next_layer(new, tube_cnt, &next);
+	    struct _tube *new_tubes = dup_tubes(arr, tube_cnt);
+	    ret = find_next_layer(new_tubes, tube_cnt, &next);
 	    if(ret < 0) {
 		npour(&arr[n->flow[i].dest], &arr[n->flow[i].src], n->flow[i].cnt);
 		printf("this road is block, return to last node.\n");
@@ -90,7 +91,7 @@ int find_next_layer(struct _tube arr[], int tube_cnt, struct _steps *n)
     return -1;
 }
 
-#if 1
+#if 0
 /* 递归实现 */
 int sort(struct _tube arr[], int tube_cnt)
 {
@@ -168,6 +169,7 @@ revert:
 	s++;
 	if (is_complete(arr, tube_cnt)) {
 	    printf("complete!\n");
+	    printresults(arr, tube_cnt);
 	    break;
 	}
     }
@@ -176,7 +178,7 @@ revert:
     while (s--)
     {
 	stack_pop(&stack, &tp);
-	printf("exec: %d -> %d, %d\n", tp.dest, tp.src, tp.cnt);
+	printf("exec: %d -> %d, %d\n", tp.src, tp.dest, tp.cnt);
 	npour(&arr[tp.dest], &arr[tp.src], tp.cnt);
 	printresults(arr, tube_cnt);
     }

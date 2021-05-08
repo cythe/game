@@ -21,7 +21,7 @@ void printtube(struct _tube *tube);
 void npour(struct _tube *src, struct _tube *dest, int n);
 int pour(struct _tube *tube1, struct _tube *tube2, int reverse);
 int is_complete(struct _tube arr[], int tube_cnt);
-int swap_tube(struct _tube *src, struct _tube *dest);
+void swap_tube(struct _tube *src, struct _tube *dest);
 int cal_place(struct _tube *t);
 int cal_color(struct _tube *t);
 int can_pour(struct _tube *src, struct _tube *dest);

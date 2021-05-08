@@ -2,3 +2,7 @@
 *.o
 core
 tags
+GPATH
+GRTAGS
+GTAGS
+

@@ -1,6 +1,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include <opencv2/core/mat.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
+
 #include "basetype.h"
 #include "load.h"
 #include "color.h"
@@ -44,11 +50,6 @@ struct _tube tubes[] = {
 #endif
 };
 
-void load_map_from_file(void) // cfg.txt
-{
-
-}
-
 static int is_not_exist(int color)
 {
     for (int i = 0; i < g_choiced.cnt; i++)
@@ -56,6 +57,15 @@ static int is_not_exist(int color)
 	    return 0;
 
     return 1;
+}
+
+static void add_color(int color)
+{
+    if (is_not_exist(color))
+    {
+	g_choiced.colors[g_choiced.cnt] = color;
+	g_choiced.cnt ++;
+    }
 }
 
 static void show_choice(void)
@@ -120,6 +130,90 @@ void format_tube(struct _tube *t)
     t->status = j;
 
     free_tubes(tmp);
+}
+
+static void cal_tube_cnt(void)
+{
+    printf("Please input tube cnt (include empty tube): ");
+    fflush(stdout);
+    scanf("%d", &g_tube_cnt); 
+    printf("tube_cnt = %d\n", g_tube_cnt);
+    g_tube_cnt = 14;
+}
+
+static void load_map_from_picture(void)
+{
+    g_use_rgb=1;
+    char pic[256]={0}; //"webwxgetmsgimg.jpg";
+    int i=0, j=0,k=0,c,l, r,g,b;
+    int color_cnt;
+    int color;
+    char ch;
+	FILE* fp = NULL;
+
+    printf("Please input file path: ");
+    fflush(stdout);
+    ch = getchar();
+    fgets(pic, sizeof(pic), stdin);
+    pic[strlen(pic)-1]='\0';
+    printf("We will read map from [%s]\n", pic);
+    
+    printf("Calculate tube_cnt...\n");
+    cal_tube_cnt();
+
+    g_tubes = (struct _tube*)malloc(g_tube_cnt * sizeof(struct _tube));
+
+    cv::Mat mat1 = cv::imread(pic);
+    cv::Mat mat2(64,64,CV_8UC3);
+
+    cv::resize(mat1, mat2, mat2.size(), 0,0);
+
+    for (auto it = mat2.begin<cv::Vec3b>(); it != mat2.end<cv::Vec3b>(); ++it)
+    {
+	j=i/64;
+	k=i%64;
+	//std::cout << int((*it)[0]) << " " << int((*it)[1]) << " " << int((*it)[2]) << std::endl;
+	b=int((*it)[0]);
+	g=int((*it)[1]);
+	r=int((*it)[2]);
+	if (j==21 || j==24|| j==27|| j==30|| j==40|| j==43|| j==46|| j==49)	
+	{
+	    if (k==3 || k==12 || k==21 || k==30 || k==39 || k==48 || k==57)
+	    {
+		if(r<60&& g<60&& b<60) {
+		    r=0;g=0;b=0;
+		}
+#if 1
+		r=r&~0xf;
+		g=g&~0xf;
+		b=b&~0xf;
+#else
+		r=r&~0x3;
+		g=g&~0x3;
+		b=b&~0x3;
+#endif
+		//printrgb(r,g,b,0);
+		add_color((r<<16)|(g<<8)|b);
+		c = (k-3)/9;
+		if(j>=40)
+		    c+=7;
+		l = j<40 ? (j-21)/3 : (j-40)/3;
+		g_tubes[c].colors[TUBE_FLOOR-l-1] = (r<<16)|(g<<8)|b;
+		printf("c=%d, l=%d\n", c,l);
+	    }
+	    if (k == 0)
+		printf("\n %d ", j);
+	}
+	i++;
+    }
+
+    for(i=0;i<14;i++)
+    {
+	format_tube(&g_tubes[i]);
+	printtube(&g_tubes[i]);
+    }
+
+    printresults(g_tubes, g_tube_cnt);
 }
 
 static void load_map_from_stdin(void)
@@ -191,7 +285,7 @@ void load_map(void)
     init_choiced();
     printf("------- Select map type -------\n");
     printf("\t1 - from stdin\n");
-    printf("\t2 - from file\n");
+    printf("\t2 - from picture\n");
     printf("\t3 - from inside case\n");
     printf("Please input map type: ");
     fflush(stdout);
@@ -202,7 +296,7 @@ void load_map(void)
 	    load_map_from_stdin();
 	    break;
 	case 2:
-	    load_map_from_file();
+	    load_map_from_picture();
 	    break;
 	case 3:
 	    g_tubes = tubes;

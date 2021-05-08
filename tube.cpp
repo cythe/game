@@ -8,7 +8,7 @@
 int g_cnt = 0;
 struct _tube *dup_tubes(struct _tube tubes[], int size)
 {
-    struct _tube *p = malloc(size * sizeof(struct _tube));
+    struct _tube *p = (struct _tube *)malloc(size * sizeof(struct _tube));
     if (NULL == p)
     {
 	printf(" %d@%s: malloc error.\n", __LINE__,__func__);
@@ -151,9 +151,9 @@ int is_complete(struct _tube arr[], int tube_cnt)
     return 1;
 }
 
-int swap_tube(struct _tube *src, struct _tube *dest)
+void swap_tube(struct _tube *src, struct _tube *dest)
 {
-    struct _tube *t = malloc(sizeof(struct _tube));
+    struct _tube *t = (struct _tube *)malloc(sizeof(struct _tube));
     if (NULL == t)
     {
 	printf(" %d@%s: malloc error.\n", __LINE__,__func__);
