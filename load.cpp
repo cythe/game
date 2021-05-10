@@ -278,7 +278,7 @@ repick:
     printresults(g_tubes, g_tube_cnt);
 }
 
-void load_map(void)
+void load_map_water_puzzle(void)
 {
     int type;
 
@@ -308,4 +308,19 @@ void load_map(void)
 	    exit(-1);
     }
     deinit_choiced();
+}
+
+void load_map(int type)
+{
+    switch(type) {
+	case 0:
+	    load_map_water_puzzle();
+	    break;
+	case 1:
+	    break;
+	case 2:
+	    break;
+	case 3:
+	    break;
+    }
 }

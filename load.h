@@ -10,5 +10,5 @@ extern struct _choiced g_choiced;
 extern struct _tube * g_tubes;
 extern int g_tube_cnt;
 
-void load_map(void);
+void load_map(int type);
 #endif
