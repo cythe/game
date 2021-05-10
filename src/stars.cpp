@@ -43,7 +43,7 @@ int get_point(int cnt)
     return 5 * cnt * cnt;
 }
 
-int trip()
+void trip(void)
 {
 
 }
@@ -53,7 +53,7 @@ int is_valid_point(int i, int j)
     return i>=0 && i<ROW && j>=0 && j<COL;
 }
 
-int print_step(struct _step *st)
+void print_step(struct _step *st)
 {
     int star[ROW][COL] = {0};
     int i, x, y;
@@ -74,6 +74,7 @@ int print_step(struct _step *st)
     }
     printf("\n");
 }
+
 #if 1
 int ten_search(int i, int j, struct _step *steps, int s)
 {
@@ -114,10 +115,11 @@ int ten_search(int i, int j, struct _step *steps, int s)
 	    ten_search(i,j+1, steps, s);
     }
 
+    return 0;
 }
 #endif
 
-int find_all()
+void find_all(void)
 {
     int i,j,s=0,p=0;
     struct _step steps[ROW*COL];
@@ -134,7 +136,7 @@ int find_all()
 	}
     }
 #endif
-    ten_search(8,2,&steps, 0);
+    ten_search(8,2, steps, 0);
     print_step(&steps[0]);
 }
 
@@ -149,7 +151,7 @@ void init_color(void)
     }
 }
 
-int main(int argc, char *argv[])
+void hack_stars(void)
 {
     init_color();
 
@@ -163,5 +165,4 @@ int main(int argc, char *argv[])
     }
 
     find_all();
-    return 0;
 }
