@@ -1,12 +1,21 @@
 #include <stdio.h>
 #include "basetype.h"
 
+int is_color_tolerant(int a, int b)
+{
+    if (a > b)
+	return (a - b) < g_color_tolerance;
+    else
+	return (b - a) < g_color_tolerance;
+
+}
+
 void printrgb(int r, int g, int b)
 {
     if (g_need_color_value) // print R,G,B 
         printf("[\033[1;48;2;%d;%d;%dm%3d,%3d,%3d\033[0m]", r,g,b, r, g, b); 
     else
-        printf("[\033[1;48;2;%d;%d;%dm   \033[0m]", r,g,b); 
+        printf("[\033[1;48;2;%d;%d;%dm  \033[0m]", r,g,b); 
 }
 
 void printcolor(int c)
@@ -20,7 +29,7 @@ void printcolor(int c)
     if (g_need_color_value) // print R,G,B 
 	printf("[\033[1;48;5;%dm%3d\033[0m]", c, c);
     else
-	printf("[\033[1;48;5;%dm   \033[0m]", c);
+	printf("[\033[1;48;5;%dm  \033[0m]", c);
 }
 
 void print_std256color(void)

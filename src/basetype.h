@@ -12,6 +12,9 @@
 extern int g_use_rgb;
 extern int g_align;
 extern int g_need_color_value;
+extern int g_resize_width;
+extern int g_resize_height;
+extern int g_color_tolerance;
 
 struct _from_to {
     int src;

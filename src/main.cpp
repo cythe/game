@@ -25,7 +25,17 @@ int main(int argc, char* argv[])
     
     load_map(type);
 
-    hack_water();
+    switch (type) {
+	case 0:
+	    hack_water();
+	    break;
+	case 1:
+	    //hack_stars();
+	    break;
+	default:
+	    printf("WTF?\n");
+	    break;
+    }
 
     return 0;
 }

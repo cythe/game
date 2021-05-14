@@ -5,8 +5,8 @@ SRC=src/*.cpp
 
 all:
 	g++ -g ${INC} ${SRC} -o a.out
-	ln -s a.out water
-	ln -s a.out stars
+	ln -sf a.out water
+	ln -sf a.out stars
 clean:
 	rm -f a.out
 	rm -f water stars
