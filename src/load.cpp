@@ -134,14 +134,6 @@ void format_tube(struct _tube *t)
     free_tubes(tmp);
 }
 
-static void cal_tube_cnt(void)
-{
-    printf("Please input tube cnt (include empty tube): ");
-    fflush(stdout);
-    scanf("%d", &g_tube_cnt); 
-    printf("tube_cnt = %d\n", g_tube_cnt);
-    g_tube_cnt = 14;
-}
 #if 1
 void printdata(cv::Mat &mat)
 {
@@ -175,56 +167,8 @@ void printdata(cv::Mat &mat)
     }
 }
 #endif
-#if 0
-int get_continue_color(cv::Vec3b *p, int max, int *color)
-{
-    int dupcnt = 0;
-    int r=0,g=0,b=0;
-    int oldr=0, oldb=0, oldg=0;
-    int sumr=0, sumb=0, sumg=0;
-    int i;
-    int init = 0;
 
-    for (i = 0; i < max; i++)
-    {
-	cv::Vec3b &pix = *p++;
-	b = pix[0];
-	g = pix[1];
-	r = pix[2];
-	printcolor((r<<16)|(g<<8)|b);
-
-	if (0 == init) {
-	    oldr=r;
-	    oldg=g;
-	    oldb=b;
-	    init = 1;
-	    continue;
-	}
-
-	if (is_color_tolerant(oldr, r) && is_color_tolerant(oldg, g) && is_color_tolerant(oldb, b)) {
-	    dupcnt += 1;
-	    sumr += r;
-	    sumg += g;
-	    sumb += b;
-	} else {
-	    printf("dupcnt(%d) broken, i=%d\n", dupcnt,i);
-	    goto out;
-	} 
-
-    }
-out:
-    if(dupcnt > 7) {
-	r = sumr/dupcnt;
-	g = sumg/dupcnt;
-	b = sumb/dupcnt;
-	*color = (r<<16|g<<8|b);
-	return dupcnt;
-    }
-    *color = (oldr<<16|oldg<<8|oldb);
-    return 0;
-}
-#else
-int get_continue_color(cv::Vec3b *p, int cols, int *color)
+int get_a_color(cv::Vec3b *p, int cols, int *color)
 {
     int dupcnt = 0;
     int r=0,g=0,b=0;
@@ -271,7 +215,6 @@ out:
 
     return i;
 }
-#endif
 
 void get_color(cv::Mat &mat)
 {
@@ -358,15 +301,54 @@ void get_color(cv::Mat &mat)
     }
     printf("There are %d rows valid data.\n", i);
 
+#if 0
+    // 指定横向扫描线
+    std::vector<int> start;
+    int scan_step;
     int step = valid_rows.size() / TUBE_FLOOR / 2;
-    int start = valid_rows.size() / TUBE_FLOOR / 4;
-    int k=0;
-    for(i=start;k<8;i+=step)
+    int inst=0;
+    for(i = 1; i < valid_rows.size(); i++)
     {
-	printf("%d: ", valid_rows[i]);
+	inst = valid_rows[i]-valid_rows[i-1];
+	if (inst > g_resize_height/60)
+	{
+	    start.push_back(valid_rows[i-1]);
+	    start.push_back(valid_rows[i]);
+
+	}
+    }
+    sort( start.begin(), start.end() );
+    start.erase( unique( start.begin(), start.end() ), start.end() );
+    int testrow;
+    for(i = 1; i < valid_rows.size(); i++)
+    {
+	testrow = (start[i]+start[i-1])/2;
+	for
+    }
+
+    for(i=0;i<start.size();i++)
+    {
+	printf("start[%d] = %d\n", i,start[i]);
+    }
+#endif
+    std::vector<int> line;
+
+    line.push_back(98);
+    line.push_back(98+22*1);
+    line.push_back(98+22*2);
+    line.push_back(98+22*3);
+    line.push_back(177);
+    line.push_back(177+22*1);
+    line.push_back(177+22*2);
+    line.push_back(177+22*3);
+    int startp = valid_rows.size() / TUBE_FLOOR / 4;
+    int k=0;
+    for(i=0;i<line.size();i++)
+    {
+	printf("%d: ", valid_rows[line[i]]);
 	for(int j=0;j<cols;j++)
 	{
-	    cv::Vec3b *p = mat.ptr<cv::Vec3b>(valid_rows[i],j);
+	    cv::Vec3b *p = mat.ptr<cv::Vec3b>(valid_rows[line[i]],j);
 	    cv::Vec3b &pix = *p;
 	    b = pix[0];
 	    g = pix[1];
@@ -376,48 +358,39 @@ void get_color(cv::Mat &mat)
 	printf("\n");
 	k++;
     }
-/// lightspot 
+
+
     k=0;
     int bs_flag=0;
     int be_flag=0;
     int match=0;
     int pos=0;
     std::vector<int> colors;
-    for(i=start;k<8;i+=step)
+    int cnt[3*TUBE_FLOOR] = {0};
+    for(i=0;i<line.size();i++)
     {
-	cv::Vec3b *p = mat.ptr<cv::Vec3b>(valid_rows[i],0);
+	cv::Vec3b *p = mat.ptr<cv::Vec3b>(valid_rows[line[i]],0);
 	pos=0;
 	bs_flag = 0;
 	do {
-	    match = get_continue_color(p, cols-pos, &color);
+	    match = get_a_color(p, cols-pos, &color);
+	    cnt[k]+=1;
 	    r = color >> 16 & 0xff;
 	    g = color >> 8 & 0xff;
 	    b = color & 0xff;
 
 	    printcolor(color);
 	    printf("this is get color match = %d\n", match);
-#if 0
-	    if (is_color_tolerant(b,180) && is_color_tolerant(g,180) && is_color_tolerant(r,180)) {
-		bs_flag ^= 0x1;
-		colors.push_back(color);
-	    } else {
-		if(bs_flag)
-		    colors.push_back(color);
-	    }
-
-	    p += match + 1;
-	    pos += match + 1;
-#else
 	    colors.push_back(color);
 	    p += match;
 	    pos += match;
-#endif
 	} while(cols - pos > 0);
 	printf("\n");
 	k++;
     }
     printf("colors = %d\n", colors.size());
 
+    printf("k0=%d, k1=%d, k2=%d\n", cnt[0], cnt[1],cnt[2]);
     std::vector<int>::iterator it;
     int last;
     int init=0;
@@ -425,28 +398,44 @@ void get_color(cv::Mat &mat)
     {
 	printcolor(*it);
 	if (0==init) {
-	    last = *it;
-	    init = 1;
+	    init =1;
 	    it++;
-	    continue;
-	}
-
-	if (last == *it) {
+	} else {
+	    init = 0;
 	    colors.erase(it);
 	}
-	else
-	{
-	    last = *it;
-	    it++;
-	}
     }
 
-    printf("after\n");
-    for(it=colors.begin();it!=colors.end();it++)
+    for (i=0;i<colors.size();i++)
     {
-	printcolor(*it);
+	if (i%7 == 0)
+	    printf("\n");
+	printcolor(colors[i]);
     }
-    printf("after\n");
+
+    g_tube_cnt = colors.size()/TUBE_FLOOR;
+    printf("g_tube_cnt = %d cnt = %d\n", g_tube_cnt, cnt[0]+cnt[1]+cnt[2]);
+    g_tubes = (struct _tube*)malloc(g_tube_cnt * sizeof(struct _tube));
+    int c,l;
+    int index = 0;
+    int bnt = 0;
+    int offset = 0;
+    for (k = 0; k < 12; k+=4)
+    {
+	if (cnt[k] > 0)
+	{
+	    b = cnt[k]/2; //7
+	    for(int i = 0; i < b*4;i++)
+	    {
+		c = (index-offset)%b + offset/TUBE_FLOOR;
+		l = (index-offset)/b;
+		printf("index = %d, c= %d , l=%d\n", index, c, l);
+		g_tubes[c].colors[TUBE_FLOOR-l-1] = colors[index];
+		index++;
+	    }
+	    offset+=4*b;
+	}
+    }
 }
 
 static void load_map_from_picture(void)
@@ -465,11 +454,6 @@ static void load_map_from_picture(void)
     fgets(pic, sizeof(pic), stdin);
     pic[strlen(pic)-1]='\0';
     printf("We will read map from [%s]\n", pic);
-    
-    printf("Calculate tube_cnt...\n");
-    cal_tube_cnt();
-
-    g_tubes = (struct _tube*)malloc(g_tube_cnt * sizeof(struct _tube));
 
     cv::Mat mat1 = cv::imread(pic);
     g_resize_height = mat1.rows;
@@ -491,40 +475,9 @@ static void load_map_from_picture(void)
 
     cv::resize(mat1, mat2, mat2.size(), 0,0, cv::INTER_LINEAR);
 
-    printdata(mat2);
+    //printdata(mat2);
 
     get_color(mat2);
-
-    for (auto it = mat2.begin<cv::Vec3b>(); it != mat2.end<cv::Vec3b>(); ++it)
-    {
-	h=i/g_resize_width;
-	w=i%g_resize_width;
-	//std::cout << int((*it)[0]) << " " << int((*it)[1]) << " " << int((*it)[2]) << std::endl;
-	b=int((*it)[0]);
-	g=int((*it)[1]);
-	r=int((*it)[2]);
-	//if (h==21 || h==24|| h==27|| h==30|| h==40|| h==43|| h==46|| h==49)
-	if (h==21*2 || h==24*2|| h==27*2|| h==30*2|| h==40*2|| h==43*2|| h==46*2|| h==49*2)
-	{
-	    if (w==3*2 || w==12*2 || w==21*2 || w==30*2 || w==39*2 || w==48*2 || w==57*2)
-	    {
-		if(r<60&& g<60&& b<60) {
-		    r=0;g=0;b=0;
-		}
-
-		add_color((r<<16)|(g<<8)|b);
-		c = (w-3*2)/(9*2);
-		if(h>=40*2)
-		    c+=7;
-		l = h<40*2 ? (h-21*2)/3/2 : (h-40*2)/3/2;
-		g_tubes[c].colors[TUBE_FLOOR-l-1] = (r<<16)|(g<<8)|b;
-		//printf("c=%d, l=%d\n", c,l);
-	    }
-	    if (w == 0)
-		printf("\n %d ", h);
-	}
-	i++;
-    }
 
     for(i=0;i<14;i++)
     {
